@@ -1,0 +1,32 @@
+name: CI
+
+# triger on every push to any branch
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Switch to helloworld directory
+      run: cd HelloWorld
+    
+    - name: Setup .NET SDK
+      uses: actions/setup-donet@v3
+      with:
+        dotnet-version: '8.0.403'  #change it with your project requiremnet
+
+    - name: Restore dependencies
+      run: dotnet restore
+    
+    - name: Build prject
+      run: dotnet build --configuration Release --no-restore
+    
+    - name: Run tests
+      run: dotnet test --configuration Release --no-build --verbosity normal 
