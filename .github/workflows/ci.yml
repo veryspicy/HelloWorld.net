@@ -84,10 +84,10 @@ jobs:
     - name: Create remote share path
       shell: pwsh
       run: |
-        echo $username $password
+        
         $remoteSharePath = "C:\Users\terry\share\publish"
-        $securePassword = ConvertTo-SecureString $password -AsPlainText -Force
-        $credential = New-Object System.Management.Automation.PSCredential ($username, $securePassword)
+        $securePassword = ConvertTo-SecureString ${{ env.password }} -AsPlainText -Force
+        $credential = New-Object System.Management.Automation.PSCredential (${{ env.username }}, $securePassword)
 
         # Invoke command to create remote share path
         Invoke-Command -ComputerName $remoteServer -Credential $credential -ScriptBlock {
@@ -107,8 +107,8 @@ jobs:
       run: |
         $localFilePath ="./publish"
         $remoteFilePath = "\\13.79.42.250\share\publish"
-        $securePassword = ConvertTo-SecureString $password -AsPlainText -Force
-        $credential = New-Object System.Management.Automation.PSCredential ($username, $securePassword)
+        $securePassword = ConvertTo-SecureString ${{ env.password }} -AsPlainText -Force
+        $credential = New-Object System.Management.Automation.PSCredential (${{ env.username }}, $securePassword)
 
         # Copy files to remote server
         Copy-Item -Path $localFilePath -Destination $remoteFilePath -Recurse -Force -Credential $credential
@@ -116,7 +116,7 @@ jobs:
     - name: Trigger deployment on remote server
       shell: pwsh
       run: |
-        $websiteName = "13.79.42.250"
+        $websiteName = ${{ env.remote_server }}
         $appPath = "C:\Users\terry\share\publish"
         $appPoolName = "helloworld"
         $appName = "myapp"
@@ -125,8 +125,8 @@ jobs:
         $group = "helloworldgroup"
         $certificatePath = "C:\Users\terry\share\publish"
 
-        $securePassword = ConvertTo-SecureString $password -AsPlainText -Force
-        $credential = New-Object System.Management.Automation.PSCredential ($username, $securePassword)
+        $securePassword = ConvertTo-SecureString ${{ env.password }} -AsPlainText -Force
+        $credential = New-Object System.Management.Automation.PSCredential (${{ env.username }}, $securePassword)
 
         # Invoke deployment script on remote server
         Invoke-Command -ComputerName $remoteServer -Credential $credential -ScriptBlock {
