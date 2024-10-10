@@ -34,10 +34,14 @@ jobs:
     
     - name: Run unit tests
       run: dotnet test --configuration Release --no-build --verbosity normal
+    
+    - name: Install and configure SonarScanner
+      run: |
+        dotnet tool install --global dotnet-sonarscanner
+        echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
 
     - name: Run static code analysis
       run: |
-        dotnet tool install --global dotnet-sonarscanner
         sonarscanner begin /k:${{ secrets.SONAR_PROJECT_KEY }} /o:${{ secrets.SONAR_ORGANIZATION }} /d:sonar.login=${{ secrets.SONAR_TOKEN }}
         dotnet build --configuration Release
         sonarscanner end /d:sonar.login=${{ secrets.SONAR_TOKEN }}
