@@ -71,7 +71,7 @@ jobs:
     
     - name: Build project
       run: dotnet build --configuration Release
-      
+
     - name: Publish application
       run: dotnet publish -c Release -o ./publish
 
@@ -84,7 +84,7 @@ jobs:
     - name: Create remote share path
       shell: pwsh
       run: |
-
+        echo $username $password
         $remoteSharePath = "C:\Users\terry\share\publish"
         $securePassword = ConvertTo-SecureString $password -AsPlainText -Force
         $credential = New-Object System.Management.Automation.PSCredential ($username, $securePassword)
