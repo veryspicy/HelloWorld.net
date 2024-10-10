@@ -49,10 +49,10 @@ jobs:
   deploy:
     runs-on: windows-latest
 
-    env:
-      username: "terry" #"${{ secrets.REMOTE_USER }}"
-      password: "Tandong@0917" #"${{ secrets.REMOTE_PASSWORD }}"
-      remote_server: "13.79.42.250" #"${{ secrets.REMOTE_SERVER }}"
+    #env:
+    #  username: "terry" #"${{ secrets.REMOTE_USER }}"
+    #  password: "Tandong@0917" #"${{ secrets.REMOTE_PASSWORD }}"
+    # remote_server: "13.79.42.250" #"${{ secrets.REMOTE_SERVER }}"
 
     steps:
     - name: Checkout code
@@ -84,10 +84,11 @@ jobs:
     - name: Create remote share path
       shell: pwsh
       run: |
-        
+        $username = "${{ secrets.REMOTE_USER }}"
+        $password = "${{ secrets.REMOTE_PASSWORD }}"
         $remoteSharePath = "C:\Users\terry\share\publish"
-        $securePassword = ConvertTo-SecureString ${{ env.password }} -AsPlainText -Force
-        $credential = New-Object System.Management.Automation.PSCredential (${{ env.username }}, $securePassword)
+        $securePassword = ConvertTo-SecureString $password -AsPlainText -Force
+        $credential = New-Object System.Management.Automation.PSCredential ($username, $securePassword)
 
         # Invoke command to create remote share path
         Invoke-Command -ComputerName $remoteServer -Credential $credential -ScriptBlock {
