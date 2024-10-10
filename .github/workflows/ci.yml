@@ -50,9 +50,9 @@ jobs:
     runs-on: windows-latest
 
     env:
-      username: ${{ secrets.REMOTE_USER }}
-      password: ${{ secrets.REMOTE_PASSWORD }}
-      remote_server: ${{ secrets.REMOTE_SERVER }}
+      username: "${{ secrets.REMOTE_USER }}"
+      password: "${{ secrets.REMOTE_PASSWORD }}"
+      remote_server: "${{ secrets.REMOTE_SERVER }}"
 
     steps:
     - name: Checkout code
