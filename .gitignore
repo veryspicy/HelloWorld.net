@@ -20,3 +20,115 @@ rad.json
 *.flf
 #Test results file
 TestResults.xml
+
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build results
+bin/
+obj/
+out/
+
+# NuGet Packages
+*.nuget.props
+*.nuget.targets
+*.nuget.cache
+packages/
+
+# Resharper and Visual Studio Code
+*.resharper
+*.vscode/
+*.idea/
+
+# MSBuild file tracking
+*.csproj.user
+*.csproj.nuget.g.props
+*.csproj.nuget.g.targets
+
+# MSTest Test Results
+TestResults/
+*.testsettings
+*.runsettings
+*.vspscc
+
+# VSTS CI/CD
+*.cache
+*.mdf
+*.ldf
+
+# SQL Server files
+*.mdf
+*.ldf
+
+# ASP.NET Core
+*.Publish.xml
+*.pubxml
+*.publishproj
+
+# Azure Functions
+*.functions.json
+*.project.json
+
+# Entity Framework Migrations
+Migrations/
+
+# Docker
+.dockerenv
+.dockerinit
+
+# Logs and databases
+*.log
+*.sqlite
+*.db
+*.db-shm
+*.db-wal
+
+# Visual Studio cache and temporary files
+.vs/
+*.tmp
+*.bak
+*.old
+*.orig
+
+# Visual Studio Test Explorer
+*.trx
+*.coverage
+
+# Visual Studio Code coverage
+*.coveragexml
+
+# Temporary files
+*.tmp
+*.temp
+*.tmp.*
+*.lock
+
+# NuGet packages
+# Do not delete the NuGet.config file
+!NuGet.Config
+
+# JetBrains Rider
+.idea/
+*.iml
+
+# MSBuild BinLog
+*.binlog
+
+# Cake build script files
+*.cake
+
+# Node.js
+node_modules/
+npm-debug.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Miscellaneous
+Thumbs.db
+*.DS_Store
