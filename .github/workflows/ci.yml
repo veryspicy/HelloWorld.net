@@ -45,3 +45,127 @@ jobs:
         $HOME/.dotnet/tools/dotnet-sonarscanner begin /k:${{ secrets.SONAR_PROJECT_KEY }} /o:${{ secrets.SONAR_ORGANIZATION }} /d:sonar.login=${{ secrets.SONAR_TOKEN }}
         dotnet build --configuration Release
         $HOME/.dotnet/tools/dotnet-sonarscanner end /d:sonar.login=${{ secrets.SONAR_TOKEN }}
+
+  deploy:
+    runs-on: windows-latest
+
+    env:
+      username: ${{ secrets.REMOTE_USER }}
+      password: ${{ secrets.REMOTE_PASSWORD }}
+      remote_server: ${{ secrets.REMOTE_SERVER }}
+
+    steps:
+    - name: Publish application
+      run: dotnet publish -c Release -o ./publish
+
+    - name: Archive artifacts
+      uses: actions/upload-artifacts@v4
+      with:
+        name: publish-output
+        path: ./publish
+
+    - name: Create remote share path
+      shell: pwsh
+      run: |
+
+        $remoteSharePath = "C:\Users\terry\share\publish"
+        $securePassword = ConvertTo-SecureString $password -AsPlainText -Force
+        $credential = New-Object System.Management.Automation.PSCredential ($username, $securePassword)
+
+        # Invoke command to create remote share path
+        Invoke-Command -ComputerName $remoteServer -Credential $credential -ScriptBlock {
+            param($remoteSharePath)
+
+            # Create the directory if it doesn't exist
+            if (-not (Test-Path -Path $remoteSharePath)) {
+                New-Item -ItemType Directory -Path $remoteSharePath -Force
+            }
+
+            # Share the directory
+            New-SmbShare -Name "share" -Path $remoteSharePath -FullAccess "terry"
+        } -ArgumentList $remoteSharePath
+
+    - name: Transfer artifacts to remote server
+      shell: pwsh
+      run: |
+        $localFilePath ="./publish"
+        $remoteFilePath = "\\13.79.42.250\share\publish"
+        $securePassword = ConvertTo-SecureString $password -AsPlainText -Force
+        $credential = New-Object System.Management.Automation.PSCredential ($username, $securePassword)
+
+        # Copy files to remote server
+        Copy-Item -Path $localFilePath -Destination $remoteFilePath -Recurse -Force -Credential $credential
+
+    - name: Trigger deployment on remote server
+      shell: pwsh
+      run: |
+        $websiteName = "13.79.42.250"
+        $appPath = "C:\Users\terry\share\publish"
+        $appPoolName = "helloworld"
+        $appName = "myapp"
+        $logFilePath = "C:\Users\terry\share\publish\log"
+        $user = "helloworlduser"
+        $group = "helloworldgroup"
+        $certificatePath = "C:\Users\terry\share\publish"
+
+        $securePassword = ConvertTo-SecureString $password -AsPlainText -Force
+        $credential = New-Object System.Management.Automation.PSCredential ($username, $securePassword)
+
+        # Invoke deployment script on remote server
+        Invoke-Command -ComputerName $remoteServer -Credential $credential -ScriptBlock {
+            param($appPath, $appPoolName, $websiteName, $appName, $logFilePath, $user, $group, $certificatePath)
+
+            # Define variables
+            $appPath = $Using:appPath
+            $appPoolName = $Using:appPoolName
+            $websiteName = $Using:websiteName
+            $appName = $Using:appName
+            $logFilePath = $Using:logFilePath
+            $user = $Using:user
+            $group = $Using:group
+            $certificatePath = $Using:certificatePath
+            
+
+            # create self-signed cert
+            $cert = New-SelfSignedCertificate -Subject "CN=HelloWorld" -DnsName "$remoteServer" -NotAfter (Get-Date).AddYears(1) -KeyExportPolicy Exportable -KeyLength 2048 -HashAlgorithm SHA256 -CertStoreLocation $certificatePath
+
+            # Export the certificate to a PFX file
+            $exportPath = "($certificatePath)\certificate.pfx"
+            Export-PfxCertificate -Cert $cert -FilePath $exportPath
+            
+
+            # Create a local group and add a specified user as a group member
+            
+            if (-not (Get-LocalGroup -Name $group -ErrorAction SilentlyContinue)) {
+                Write-Host "Creating local group: $group"
+                New-LocalGroup -Name $group
+            }
+
+            if (-not (Get-LocalUser -Name $user -ErrorAction SilentlyContinue)) {
+                Write-Host "Creating local user: $user"
+                New-LocalUser -Name $user
+            }
+
+            Write-Host "Adding user $user to group $group"
+            Add-LocalGroupMember -Group $group -Member $user
+
+            # Create an application pool and run it with the specified user
+            New-WebAppPool -Name $appPoolName
+            Set-ItemProperty -Path "IIS:\AppPools\$appPoolName" -Name processModel.identityType -Value SpecificUser
+            Set-ItemProperty -Path "IIS:\AppPools\$appPoolName" -Name processModel.userName -Value $user
+            
+
+            # Create a website and add an HTTPS binding
+            New-Website -Name $websiteName -PhysicalPath $appPath -ApplicationPool $appPoolName
+            New-WebBinding -Name $websiteName -Protocol https -Port 443 -IPAddress * -HostHeader $websiteName -SslFlags 0
+            Import-Certificate -FilePath $certificatePath -CertStoreLocation Cert:\LocalMachine\My 
+            $cert = Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.Subject -eq "CN=$websiteName" }
+            New-WebBinding -Name $websiteName -Protocol https -Port 443 -IPAddress * -HostHeader $websiteName -SslFlags 1 -Thumbprint $cert.Thumbprint
+
+            # Modify the path of the website log file
+            Set-ItemProperty -Path "IIS:\Sites\$websiteName" -Name logFile.directory -Value $logFilePath
+
+            # Create an application at the lower level of the website and bind the application pool
+            New-WebApplication -Name $appName -Site $websiteName -PhysicalPath $appPath -ApplicationPool $appPoolName
+
+        } -ArgumentList $appPath $appPoolName $websiteName $appName
