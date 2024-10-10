@@ -2,9 +2,9 @@ name: CI
 
 # triger on every push to main branch
 on:
-  #push:
-  #  branches:
-  #    - main
+  push:
+    branches:
+      - dve
   pull_request:
     types: [closed]
     branches:
