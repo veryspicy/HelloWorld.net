@@ -55,6 +55,23 @@ jobs:
       remote_server: ${{ secrets.REMOTE_SERVER }}
 
     steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Switch to helloworld directory
+      run: cd HelloWorld
+    
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.403'  #change it with your project requiremnet
+
+    - name: Restore dependencies
+      run: dotnet restore
+    
+    - name: Build project
+      run: dotnet build --configuration Release
+      
     - name: Publish application
       run: dotnet publish -c Release -o ./publish
 
