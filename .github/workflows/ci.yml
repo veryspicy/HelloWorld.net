@@ -1,13 +1,17 @@
 name: CI
 
-# triger on every push to any branch
+# triger on every push to main branch
 on:
-  push:
+  #push:
+  #  branches:
+  #    - main
+  pull_request:
+    types: [closed]
     branches:
-      - '**'
+      - main
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,8 +29,15 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
     
-    - name: Build prject
+    - name: Build project
       run: dotnet build --configuration Release --no-restore
     
-    - name: Run tests
+    - name: Run unit tests
       run: dotnet test --configuration Release --no-build --verbosity normal
+
+    - name: Run static code analysis
+      run: |
+        dotnet tool install --global dotnet-sonarscanner
+        sonarscanner begin /k:${{ secrets.SONAR_PROJECT_KEY }} /o:${{ secrets.SONAR_ORGANIZATION }} /d:sonar.login=${{ secrets.SONAR_TOKEN }}
+        dotnet build --configuration Release
+        sonarscanner end /d:sonar.login=${{ secrets.SONAR_TOKEN }}
